@@ -1,6 +1,7 @@
 import os
 import yaml
 
+log_to_db = True
 
 FOGLAMP_DEPLOYMENT = "dev"  # dev | test | prod
 

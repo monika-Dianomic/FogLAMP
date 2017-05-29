@@ -10,7 +10,8 @@ from cbor2 import loads
 from sqlalchemy.dialects.postgresql import JSONB
 from aiopg.sa import create_engine
 import aiopg.sa
-from foglamp.configurator import Configurator
+from foglamp.configurator import Configurator, log_to_db
+from foglamp.coap.log_pg_handler import LogPgHandler
 
 metadata = sa.MetaData()
 
@@ -26,6 +27,12 @@ class SensorValues(resource.Resource):
     '''Handles other/sensor_values requests'''
     def __init__(self):
         super(SensorValues, self).__init__()
+
+        logdb = LogPgHandler()
+        if (log_to_db == True):
+            logging.getLogger('coap-server').addHandler(logdb)
+        else:
+            logging.getLogger('coap-server').removeHandler(logdb)
 
     def register(self, resourceRoot):
         '''Registers URI with aiocoap'''
@@ -57,5 +64,8 @@ class SensorValues(resource.Resource):
                         "Duplicate key (%s) inserting sensor values: %s"
                         , key # Maybe the generated key is the problem
                         , original_payload)
+
+        logging.getLogger('coap-server').info('Inserted Sensor Values: %s, %s', key, payload)
+
         return aiocoap.Message(payload=''.encode("utf-8"))
 
