@@ -6,6 +6,10 @@ import sqlalchemy as sa
 from foglamp.configurator import Configurator
 import logging.handlers
 
+from aiopg.sa import create_engine
+import aiopg.sa
+import psycopg2
+
 metadata = sa.MetaData()
 
 __log__ = sa.Table(
@@ -47,23 +51,37 @@ class PostgresHandler(logging.Handler):
         return self._emit(record)
 
 
-class AsyncPostgresHandler(PostgresHandler):
+class AsyncPostgresHandler(logging.Handler):
     '''Customized logging handler that puts logs to the postgres database'''
 
     def __init__(self):
-        super().__init__()
+        logging.Handler.__init__(self)
+        Configurator().initialize_dbconfig()
 
-    async def __emit(self, record):
-        self._emit(record)
+    async def _emit(self, record):
+        tm = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(record.created))
+        self.log_msg = record.msg
+        self.log_msg = self.log_msg.strip()
+        self.log_msg = self.log_msg.replace('\'', '\'\'')
+
+        conf = Configurator()
+        async with aiopg.sa.create_engine(conf.db_conn_str) as engine:
+            async with engine.acquire() as conn:
+                try:
+                    await conn.execute(__log__.insert().values(log_level=record.levelno, \
+                                                     log_levelname=record.levelname, \
+                                                     log=self.log_msg, \
+                                                     created_at=tm, \
+                                                     created_by=record.name))
+                except Exception:
+                    self.handleError(record)
 
     def emit(self, record):
-        asyncio.get_event_loop().run_until_complete(self.__emit(record))
-
-
-# from log_pg_handler import *
+        asyncio.get_event_loop().run_until_complete(self._emit(record))
 
 if __name__ == '__main__':
     logdb = AsyncPostgresHandler()
-    logging.getLogger('').addHandler(logdb)
     log = logging.getLogger("my_logger")
+    log.addHandler(logdb)
     log.error('This is a test error')
+
