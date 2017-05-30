@@ -1,5 +1,7 @@
 import time
 import logging
+
+import asyncio
 import sqlalchemy as sa
 from foglamp.configurator import Configurator
 import logging.handlers
@@ -16,14 +18,14 @@ __log__ = sa.Table(
     , sa.Column('created_by', sa.types.VARCHAR(50)))
 '''Record Log data into this table'''
 
-class LogPgHandler(logging.Handler):
+class PostgresHandler(logging.Handler):
     '''Customized logging handler that puts logs to the postgres database'''
 
     def __init__(self):
         logging.Handler.__init__(self)
         Configurator().initialize_dbconfig()
 
-    def emit(self, record):
+    def _emit(self, record):
         tm = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(record.created))
         self.log_msg = record.msg
         self.log_msg = self.log_msg.strip()
@@ -41,12 +43,27 @@ class LogPgHandler(logging.Handler):
         except Exception:
             self.handleError(record)
 
+    def emit(self, record):
+        return self._emit(record)
+
+
+class AsyncPostgresHandler(PostgresHandler):
+    '''Customized logging handler that puts logs to the postgres database'''
+
+    def __init__(self):
+        super().__init__()
+
+    async def __emit(self, record):
+        self._emit(record)
+
+    def emit(self, record):
+        asyncio.get_event_loop().run_until_complete(self.__emit(record))
+
 
 # from log_pg_handler import *
 
 if __name__ == '__main__':
-    logdb = LogPgHandler()
+    logdb = AsyncPostgresHandler()
     logging.getLogger('').addHandler(logdb)
     log = logging.getLogger("my_logger")
     log.error('This is a test error')
-

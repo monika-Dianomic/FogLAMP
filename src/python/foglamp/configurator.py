@@ -1,8 +1,6 @@
 import os
 import yaml
 
-log_to_db = True
-
 FOGLAMP_DEPLOYMENT = "dev"  # dev | test | prod
 
 FOGLAMP_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,11 +25,11 @@ class Configurator:
         return cls.db_conn_str
 
     @classmethod
-    def initialize_dbconfig(cls):
+    def initialize_dbconfig(cls, fog_deploy=FOGLAMP_DEPLOYMENT):
         """ initialize database connection"""
 
         # loading from yaml
-        config_params = cls.cfg['database'][FOGLAMP_DEPLOYMENT]
+        config_params = cls.cfg['database'][fog_deploy]
         # print(config_params)
         # log if db password is not found in env variables
         password = os.environ.get('FOGLAMP_DB_PASSWORD')
