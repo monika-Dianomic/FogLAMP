@@ -1,17 +1,14 @@
-import datetime
-import asyncio
+import logging
 import uuid
-import psycopg2
 import aiocoap
 import aiocoap.resource as resource
-import logging
+import aiopg.sa
+import psycopg2
 import sqlalchemy as sa
 from cbor2 import loads
-from sqlalchemy.dialects.postgresql import JSONB
-from aiopg.sa import create_engine
-import aiopg.sa
 from foglamp.configurator import Configurator
-from foglamp.coap.postgres_handler import AsyncPostgresHandler
+from foglamp.postgres_handler import AsyncPostgresHandler
+from sqlalchemy.dialects.postgresql import JSONB
 
 metadata = sa.MetaData()
 
@@ -25,16 +22,10 @@ __tbl__ = sa.Table(
 # Custom Sensor log levels
 DEBUG_SENSOR1 = 51
 DEBUG_SENSOR2 = 52
-DEBUG_SENSOR3 = 53
-DEBUG_SENSOR4 = 54
-DEBUG_SENSOR5 = 55
 
 def set_custom_log_levels():
     logging.addLevelName(DEBUG_SENSOR1, "SENSOR1")
     logging.addLevelName(DEBUG_SENSOR2, "SENSOR2")
-    logging.addLevelName(DEBUG_SENSOR3, "SENSOR3")
-    logging.addLevelName(DEBUG_SENSOR4, "SENSOR4")
-    logging.addLevelName(DEBUG_SENSOR5, "SENSOR5")
 
     def sensor1(self, message, *args, **kws):
         # Yes, logger takes its '*args' as 'args'.
@@ -46,26 +37,8 @@ def set_custom_log_levels():
         if self.isEnabledFor(DEBUG_SENSOR2):
             self._log(DEBUG_SENSOR2, message, args, **kws)
 
-    def sensor3(self, message, *args, **kws):
-        # Yes, logger takes its '*args' as 'args'.
-        if self.isEnabledFor(DEBUG_SENSOR3):
-            self._log(DEBUG_SENSOR3, message, args, **kws)
-
-    def sensor4(self, message, *args, **kws):
-        # Yes, logger takes its '*args' as 'args'.
-        if self.isEnabledFor(DEBUG_SENSOR4):
-            self._log(DEBUG_SENSOR4, message, args, **kws)
-
-    def sensor5(self, message, *args, **kws):
-        # Yes, logger takes its '*args' as 'args'.
-        if self.isEnabledFor(DEBUG_SENSOR5):
-            self._log(DEBUG_SENSOR5, message, args, **kws)
-
     logging.Logger.sensor1 = sensor1
     logging.Logger.sensor2 = sensor2
-    logging.Logger.sensor3 = sensor3
-    logging.Logger.sensor4 = sensor4
-    logging.Logger.sensor5 = sensor5
 
 
 class SensorValues(resource.Resource):

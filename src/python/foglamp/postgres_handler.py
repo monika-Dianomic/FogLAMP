@@ -1,18 +1,16 @@
 import time
 import logging
-
 import asyncio
 import sqlalchemy as sa
-from foglamp.configurator import Configurator
-import logging.handlers
-
-from aiopg.sa import create_engine
 import aiopg.sa
 import psycopg2
+import logging.handlers
+from foglamp.configurator import Configurator
+from aiopg.sa import create_engine
 
 metadata = sa.MetaData()
 
-__log__ = sa.Table(
+log_table = sa.Table(
     'log_t'
     , metadata
     , sa.Column('log_level', sa.types.INT)
@@ -23,7 +21,7 @@ __log__ = sa.Table(
 '''Record Log data into this table'''
 
 class PostgresHandler(logging.Handler):
-    '''Customized logging handler that puts logs to the postgres database'''
+    """Customized logging handler that puts logs to the postgres database"""
 
     def __init__(self):
         logging.Handler.__init__(self)
@@ -39,7 +37,7 @@ class PostgresHandler(logging.Handler):
         conn = sa.create_engine(conf.db_conn_str)
 
         try:
-            conn.execute(__log__.insert().values(log_level=record.levelno, \
+            conn.execute(log_table.insert().values(log_level=record.levelno, \
                                                        log_levelname=record.levelname, \
                                                        log=self.log_msg, \
                                                        created_at=tm, \
@@ -52,7 +50,7 @@ class PostgresHandler(logging.Handler):
 
 
 class AsyncPostgresHandler(logging.Handler):
-    '''Customized logging handler that puts logs to the postgres database'''
+    """Customized asynchronous logging handler that puts logs to the postgres database"""
 
     def __init__(self):
         logging.Handler.__init__(self)
@@ -68,7 +66,7 @@ class AsyncPostgresHandler(logging.Handler):
         async with aiopg.sa.create_engine(conf.db_conn_str) as engine:
             async with engine.acquire() as conn:
                 try:
-                    await conn.execute(__log__.insert().values(log_level=record.levelno, \
+                    await conn.execute(log_table.insert().values(log_level=record.levelno, \
                                                      log_levelname=record.levelname, \
                                                      log=self.log_msg, \
                                                      created_at=tm, \
@@ -78,10 +76,3 @@ class AsyncPostgresHandler(logging.Handler):
 
     def emit(self, record):
         asyncio.get_event_loop().run_until_complete(self._emit(record))
-
-if __name__ == '__main__':
-    logdb = AsyncPostgresHandler()
-    log = logging.getLogger("my_logger")
-    log.addHandler(logdb)
-    log.error('This is a test error')
-
