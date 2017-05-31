@@ -24,6 +24,12 @@ DEBUG_SENSOR1 = 51
 DEBUG_SENSOR2 = 52
 
 def set_custom_log_levels():
+    """
+    This def is used to set custom log levels that may come from Coap sensor. This is
+    being done to record logs more meaningfully. Also, the custom log levels may be picked from a
+    pre defined db table.
+    """
+
     logging.addLevelName(DEBUG_SENSOR1, "SENSOR1")
     logging.addLevelName(DEBUG_SENSOR2, "SENSOR2")
 

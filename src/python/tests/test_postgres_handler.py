@@ -28,7 +28,7 @@ class TestPostgresHandler:
             meta = sa.MetaData(bind=connection, reflect=True)
             with connection  as conn:
                 if 'log_t' not in meta.tables:
-                    log_table = sa.Table(
+                    _log_tbl = sa.Table(
                         'log_t'
                         , meta
                         , sa.Column('log_level', sa.types.INT)
@@ -36,7 +36,7 @@ class TestPostgresHandler:
                         , sa.Column('log', sa.types.VARCHAR(100))
                         , sa.Column('created_at', sa.types.DATE)
                         , sa.Column('created_by', sa.types.VARCHAR(50)))
-                    log_table.create()
+                    _log_tbl.create()
 
         check_for_tables()
 
