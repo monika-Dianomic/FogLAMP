@@ -1,3 +1,4 @@
+import logbook
 import pytest
 import logging
 import asyncio
@@ -6,8 +7,7 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.orm.session import Session
 from foglamp.configurator import Configurator
 from foglamp.postgres_handler import *
-from foglamp.coap.uri_handlers.sensor_values import DEBUG_SENSOR1, DEBUG_SENSOR2, set_custom_log_levels
-
+from foglamp.foglamp_logger import *
 
 # noinspection PyClassHasNoInit
 
@@ -44,9 +44,6 @@ class TestPostgresHandler:
         cls.connection = cls.engine.connect()
         cls.meta = sa.MetaData(bind=cls.connection, reflect=True)
 
-        # Add Custom level to logging
-        set_custom_log_levels()
-
     @classmethod
     def teardown_class(cls):
         cls.connection.close()
@@ -57,7 +54,8 @@ class TestPostgresHandler:
         self.session = Session(TestPostgresHandler.connection)
 
     def teardown_method(self, method):
-        # TODO: Investigate why rollback is not working
+        # TODO: Investigate why rollback is not workingfrom foglamp.foglamp_logger import *
+
         self.__transaction.rollback()
 
         logs = TestPostgresHandler.meta.tables['log_t']
@@ -66,27 +64,21 @@ class TestPostgresHandler:
         self.session.close()
 
     def test_log(self):
-        logdb = PostgresHandler()
-        my_logger = logging.getLogger("foglamp_logger")
-        my_logger.addHandler(logdb)
-        my_logger.sensor1('This is a test error')
+        foglamp_logger.sensor1('This is a test error')
 
         logs = TestPostgresHandler.meta.tables['log_t']
         for row in TestPostgresHandler.connection.execute(logs.select()):
             assert row.log_level == 51
             assert row.log_levelname == 'SENSOR1'
             assert row.log == 'This is a test error'
-            assert row.created_by == "foglamp_logger"
+            assert row.created_by == "foglamp.foglamp_logger"
 
     def test_async_log(self):
-        logdb = AsyncPostgresHandler()
-        my_async_logger = logging.getLogger("foglamp_async_logger")
-        my_async_logger.addHandler(logdb)
-        my_async_logger.sensor2('This is a async test error')
+        foglamp_logger.sensor2('This is a async test error')
 
         logs = TestPostgresHandler.meta.tables['log_t']
         for row in TestPostgresHandler.connection.execute(logs.select()):
             assert row.log_level == 52
             assert row.log_levelname == 'SENSOR2'
             assert row.log == 'This is a async test error'
-            assert row.created_by == "foglamp_async_logger"
+            assert row.created_by == "foglamp.foglamp_logger"

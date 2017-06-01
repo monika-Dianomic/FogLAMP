@@ -9,3 +9,5 @@ docs/__pycache__/
 # Compiled Object files
 *.pyc
 
+# Logs
+*.log
