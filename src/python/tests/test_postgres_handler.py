@@ -1,4 +1,3 @@
-import logbook
 import pytest
 import logging
 import asyncio
