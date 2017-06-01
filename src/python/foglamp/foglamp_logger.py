@@ -28,6 +28,7 @@ logging.Logger.sensor1 = sensor1
 logging.Logger.sensor2 = sensor2
 
 foglamp_logger = logging.getLogger(__name__)
+foglamp_logger.setLevel(logging.DEBUG)
 
 foglamp_log_formatter = logging.Formatter('[%(asctime)s] %(levelname)s: %(name)s: %(message)s [%(filename)s/%(lineno)d %(module)s/%(funcName)s]')
 

@@ -81,3 +81,9 @@ class TestPostgresHandler:
             assert row.log_levelname == 'SENSOR2'
             assert row.log == 'This is a async test error'
             assert row.created_by == "foglamp.foglamp_logger"
+
+    def test_latency(self):
+        # Ref: https://stackoverflow.com/questions/24791395/python-logging-causing-latencies
+        t = round(100 * time.time())
+        foglamp_logger.info('[%s] Foo' % t)
+        foglamp_logger.info('[%s] Bar' % t)
