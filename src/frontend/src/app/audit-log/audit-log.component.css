@@ -1,9 +1,4 @@
-.scroll tr {
-  display: flex;
-}
-
-.scroll tbody {
-  width: 100%;
+table.scroll {
   height: 400px;
 }
 

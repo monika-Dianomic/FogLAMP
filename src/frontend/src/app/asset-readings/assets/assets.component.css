@@ -1,0 +1,9 @@
+table.scroll {
+    height: 300px;
+}
+
+table.readings-scroll {
+  height: 650px;
+  overflow-x: auto;
+  display: block;
+}
