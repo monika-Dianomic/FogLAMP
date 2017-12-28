@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuditService, AlertService } from '../services/index';
+import { NgProgress } from 'ngx-progressbar';
 
 @Component({
   selector: 'app-audit-log',
@@ -22,7 +23,10 @@ export class AuditLogComponent implements OnInit {
   tempOffset = 0;       // Temporary offset during pagination
   totalPagesCount = 0;
 
-  constructor(private auditService: AuditService, private alertService: AlertService) { }
+  isInvalidLimit = false;
+  isInvalidOffset = false;
+
+  constructor(private auditService: AuditService, private alertService: AlertService, public ngProgress: NgProgress) { }
 
   ngOnInit() {
     this.getLogSource();
@@ -124,6 +128,11 @@ export class AuditLogComponent implements OnInit {
   }
 
   public setLimit(limit) {
+    this.isInvalidLimit = false;
+    if (+limit > 1000) {
+      this.isInvalidLimit = true; // limit range validation 
+      return;
+    }
     if (this.page !== 1) {
       this.page = 1;
       this.tempOffset = this.offset;
@@ -138,6 +147,12 @@ export class AuditLogComponent implements OnInit {
   }
 
   public setOffset(offset: number) {
+    this.isInvalidOffset = false;
+    if (offset > 2147483647) {
+      this.isInvalidOffset = true; // offset range validation
+      return;
+    }
+
     if (this.page !== 1) {
       this.page = 1;
     }
@@ -175,9 +190,13 @@ export class AuditLogComponent implements OnInit {
   }
 
   auditLogSubscriber() {
+    /** request started */
+    this.ngProgress.start();
     this.auditService.getAuditLogs(this.limit, this.tempOffset, this.source, this.severity).
       subscribe(
       data => {
+        /** request completed */
+        this.ngProgress.done();
         if (data.error) {
           console.log('error in response', data.error);
           this.alertService.error(data.error.message);
@@ -193,6 +212,10 @@ export class AuditLogComponent implements OnInit {
         }
         this.totalPages();
       },
-      error => { console.log('error', error); });
+      error => {
+        /** request completed */
+        this.ngProgress.done();
+        console.log('error', error);
+      });
   }
 }
